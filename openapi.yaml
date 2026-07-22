@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: culturetest-api
+  description: Candidate results API for CultureTest.
+  version: 0.3.0
+servers:
+  - url: ""
+    description: Same-origin (the app/api mocks in this repo)
+
+paths:
+  /api/candidates:
+    get:
+      summary: List candidate results
+      operationId: listCandidates
+      tags:
+        - candidates
+      parameters:
+        - name: role
+          in: query
+          required: false
+          description: Role to filter by, or "all".
+          schema:
+            type: string
+        - name: minScore
+          in: query
+          required: false
+          description: Only return candidates scoring at or above this value.
+          schema:
+            type: integer
+        - name: search
+          in: query
+          required: false
+          description: Case-insensitive substring match on candidate name.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching candidates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CandidateSummary"
+        "502":
+          $ref: "#/components/responses/UpstreamError"
+
+  /api/candidates/{id}:
+    get:
+      summary: Get a single candidate result
+      operationId: getCandidateById
+      tags:
+        - candidates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The candidate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CandidateDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  schemas:
+    Score:
+      type: string
+      description: >
+        A behavioural score from 0 to 100, to one decimal place.
+        Serialised as a string: the backend stores these as Postgres NUMERIC and
+        Go marshals them through shopspring/decimal, which writes decimals as
+        JSON strings to avoid float rounding. Clients must parse before doing
+        arithmetic or comparison.
+      example: "86.5"
+
+    CandidateSummary:
+      type: object
+      required:
+        - id
+        - name
+        - role
+        - score
+        - completedAt
+      properties:
+        id:
+          type: string
+          example: c_01
+        name:
+          type: string
+          example: Amara Okafor
+        role:
+          type: string
+          enum:
+            - Engineering
+            - Product
+            - Sales
+        score:
+          $ref: "#/components/schemas/Score"
+        completedAt:
+          type: string
+          format: date-time
+
+    DimensionScore:
+      type: object
+      required:
+        - label
+        - score
+      properties:
+        label:
+          type: string
+          example: Adaptability
+        score:
+          $ref: "#/components/schemas/Score"
+
+    CandidateDetail:
+      allOf:
+        - $ref: "#/components/schemas/CandidateSummary"
+        - type: object
+          required:
+            - dimensions
+          properties:
+            dimensions:
+              type: array
+              items:
+                $ref: "#/components/schemas/DimensionScore"
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+
+  responses:
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    UpstreamError:
+      description: Upstream failure
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"

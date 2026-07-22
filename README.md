@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CultureTest: Candidate Results
 
-## Getting Started
+## Context
 
-First, run the development server:
+This app is a toy demo of what a customer sees: a list of candidates, their
+overall score and fit band. Our users use this view to decide who to shortlist for interviews, so what it shows needs to be trustworthy.
+
+For the purposes of this tech test, assume this feature was built by a
+contractor before you joined and you've inherited it. It works, more or less, and it's in front of customers.
+
+We're about to build the next quarter of work on top of it. [ROADMAP.md](./ROADMAP.md) explains what the plans are. 
+
+## What we'll do on the call
+
+You'll walk us through the code and tell us what you make of it. We'll then
+discuss what you would do with it and design the first roadmap item together,
+out loud. There is no coding phase.
+
+Although you'll probably find bugs, this isn't a bug-spotting competition and
+we aren't counting how many you identify.
+
+We're interested in how you assess an inherited codebase as a foundation for
+what comes next: how its architecture will hold up, what would make it easier
+to build in, and how you decide what must change now versus what can be carried
+deliberately as debt.
+
+We don't expect an exhaustive review. Focus on the areas you think matter and
+explain the evidence, trade-offs and unknowns behind your judgement. Ask
+questions and challenge our assumptions when you disagree.
+
+## Running it
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## How the API works
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+We're spec first. `openapi.yaml` is the contract. The transport types and fetch
+client under `lib/api/generated/` are produced from it by
+[orval](https://orval.dev):
 
-## Learn More
+```bash
+npm run api:generate
+```
 
-To learn more about Next.js, take a look at the following resources:
+The generated output is committed, so you don't need to run it. Code outside
+that directory is handwritten application code, even when it wraps the
+generated client. In the real product the same spec generates the Go server
+handlers.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+There's no real backend in this repo. The routes under `app/api/` are a local
+stand in for it, reading from `lib/fixtures.ts`. They simulate staging
+conditions, including variable latency and occasional upstream failures.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Other commands
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run lint        # eslint
+npm run typecheck   # tsc --noEmit
+npm run build       # production build
+```
